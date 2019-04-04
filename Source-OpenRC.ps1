@@ -1,4 +1,4 @@
-<#
+#
 .Synopsis
    Source an OpenStack OpenRC file.
 .DESCRIPTION
@@ -13,18 +13,18 @@
    http://openstack.naturalis.nl
 #>
 
-If ($args.count -lt 1) {
-    Write "Please provide an OpenRC file as argument."
+If (!$args) {
+    Write-Host "Please provide an OpenRC file as argument."
     Exit
 }
 
 ElseIf ($args.count -gt 1) {
-    Write "Please provide a single OpenRC file as argument."
+    Write-Host "Please provide a single OpenRC file as argument."
     Exit
 }
 
 ElseIf (-Not (Test-Path $args[0])) {
-    Write "The OpenRC file you specified doesn't exist!"
+    Write-Host "The OpenRC file you specified doesn't exist!"
     Exit
 }
 Else {
@@ -38,43 +38,97 @@ Else {
     #
     # *NOTE*: Using the 2.0 *auth api* does not mean that compute api is 2.0.  We
     # will use the 1.1 *compute api*
-    $os_tenant_name = Select-String -Path $openrc -Pattern 'OS_TENANT_NAME'
-    If ($os_tenant_name) {
-        $env:OS_TENANT_NAME = ([string]($os_tenant_name)).Split("=")[1].Replace("`"","")
-    }
-    Else {
-        Write $error
+
+    # Determine OS Identity API Version
+    $Content = Get-Content $openrc
+    if ($content -match "OS_IDENTITY_API_VERSION=2"){$APIVer = 2}
+    elseif ($content -match "OS_IDENTITY_API_VERSION=3"){$APIVer = 3}
+    else{
+        Write-Error "OS Identity API Version not supported"
         Exit
     }
 
-    # With the addition of Keystone we have standardized on the term **tenant**
-    # as the entity that owns the resources.
-    $os_tenant_id = Select-String -Path $openrc -Pattern 'OS_TENANT_ID'
-    If ($os_tenant_id) {
-        $env:OS_TENANT_ID = ([string]($os_tenant_id)).Split("=")[1].Replace("`"","")
+    # Check if OS_DOMAIN_NAME is set and clear if it is
+    if ($env:OS_USER_DOMAIN_NAME){
+        Remove-Item env:OS_USER_DOMAIN_NAME
+    }
+
+    # Check if OS_REGION_NAME is set and clear if it is
+    if ($env:OS_REGION_NAME){
+        Remove-Item env:OS_REGION_NAME
+    }
+
+    # Check if OS_INTERFACE is set and clear if it is
+    if ($env:OS_INTERFACE){
+        Remove-Item env:OS_INTERFACE
+    }
+
+    # Check if OS_IDENTITY_API_VERSION is set and clear if it is
+    if ($env:OS_IDENTITY_API_VERSION){
+        Remove-Item env:OS_IDENTITY_API_VERSION
+    }
+
+    # Set the tenant/project name & ID depending on which OS Identity API version is in use
+    If ($APIVer -eq 2){
+        if ($env:OS_PROJECT_NAME){
+            Remove-Item env:OS_PROJECT_NAME
+        }
+        $os_tenant_name = Select-String -Path $openrc -Pattern 'OS_TENANT_NAME='
+        $env:OS_TENANT_NAME = [String]$os_tenant_name -split "`"" | Select -Index 1
+
+        if ($env:OS_PROJECT_ID){
+            Remove-Item env:OS_PROJECT_ID
+        }
+        $os_tenant_id = Select-String -Path $openrc -Pattern 'OS_TENANT_ID='
+        $env:OS_TENANT_ID = [String]$os_tenant_id -split "=" | Select -Last 1
+    }
+    ElseIf ($APIVer -eq 3) {
+        if ($env:OS_TENANT_NAME){
+            Remove-Item env:OS_TENANT_NAME
+        }
+        $os_project_name = Select-String -Path $openrc -Pattern 'OS_PROJECT_NAME='
+        $env:OS_PROJECT_NAME = [String]$os_Project_name -split "`"" | Select -Index 1
+        
+        if ($env:OS_TENANT_ID){
+            Remove-Item env:OS_TENANT_ID
+        }
+        $os_project_id = Select-String -Path $openrc -Pattern 'OS_Project_ID='
+        $env:OS_PROJECT_ID = [String]$os_Project_id -split "=" | Select -Last 1
+        
+        # Set OS User Domain Name to default
+        $env:OS_USER_DOMAIN_NAME = "Default"
+
+        # Set OS Region Name to regionOne
+        $env:OS_REGION_NAME = "regionOne"
+
+        # Set OS Interface
+        $env:OS_INTERFACE = "public"
+        
+        # Set OS Itentity API Version
+        $env:OS_IDENTITY_API_VERSION = 3
     }
     Else {
-        Write $error
+        Write-Host $error
         Exit
     }
 
-    $os_auth_url = Select-String -Path $openrc -Pattern 'OS_AUTH_URL'
+    $os_auth_url = Select-String -Path $openrc -Pattern 'OS_AUTH_URL='
     If ($os_auth_url) {
-        $env:OS_AUTH_URL = ([string]($os_auth_url)).Split("=")[1].Replace("`"","")
+        $env:OS_AUTH_URL = [String]$os_auth_url -split "=" | Select -Last 1
     }
     Else {
-        Write $error
+        Write-Host $error
         Exit
     }
 
     # In addition to the owning entity (tenant), openstack stores the entity
     # performing the action as the **user**.
-    $os_username = Select-String -Path $openrc -Pattern 'OS_USERNAME'
+    $os_username = Select-String -Path $openrc -Pattern 'OS_USERNAME='
     If ($os_username) {
-        $env:OS_USERNAME = ([string]($os_username)).Split("=")[1].Replace("`"","")
+        $env:OS_USERNAME = [String]$os_username -split "`"" | Select -Index 1
     }
     Else {
-        Write $error
+        Write-Host $error
         Exit
     }
 
