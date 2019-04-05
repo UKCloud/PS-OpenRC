@@ -1,16 +1,16 @@
 #
 .Synopsis
-   Source an OpenStack OpenRC file.
+   Source an OpenStack OpenRC file in Windows PowerShell.
 .DESCRIPTION
    This script allows you to source an OpenRC file that can be downloaded from the 
-   OpenStack dashboard. After running the script you'll be able to use the OpenStack 
-   command-line tools. These need to be installed separately.
+   OpenStack dashboard for use in Windows. After running the script you'll be able 
+   to use the OpenStack command-line tools. These need to be installed separately.
 .PARAMETER LiteralPath
    The OpenRC file you downloaded from the OpenStack dashboard.
 .EXAMPLE
-   Source-OpenRC H:\project-openrc.sh
+   Source-OpenRC.ps1 H:\project-openrc.sh
 .LINK
-   http://openstack.naturalis.nl
+   Modified by https://ukcloud.com/ from initial script by http://openstack.naturalis.nl
 #>
 
 If (!$args) {
