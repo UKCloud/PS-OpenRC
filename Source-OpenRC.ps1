@@ -11,6 +11,9 @@
    Source-OpenRC.ps1 H:\project-openrc.sh
 .LINK
    Modified by https://ukcloud.com/ from initial script by http://openstack.naturalis.nl
+.Notes
+   Last modified by:
+   Dudley Andrews
 #>
 
 If (!$args) {
