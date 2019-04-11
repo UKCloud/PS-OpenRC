@@ -1,4 +1,4 @@
-#
+<#
 .Synopsis
    Source an OpenStack OpenRC file in Windows PowerShell.
 .DESCRIPTION
