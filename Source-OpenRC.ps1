@@ -98,8 +98,9 @@ Else {
         $os_project_id = Select-String -Path $openrc -Pattern 'OS_Project_ID='
         $env:OS_PROJECT_ID = [String]$os_Project_id -split "=" | Select -Last 1
         
-        # Set OS User Domain Name to default
-        $env:OS_USER_DOMAIN_NAME = "Default"
+      
+		# Set OS Domain Name 
+		$env:OS_PROJECT_DOMAIN_NAME = "Default"
 
         # Set OS Region Name to regionOne
         $env:OS_REGION_NAME = "regionOne"
@@ -109,6 +110,28 @@ Else {
         
         # Set OS Itentity API Version
         $env:OS_IDENTITY_API_VERSION = 3
+		
+		# Set Idenitity provider (for SSO)
+		$env:OS_IDENTITY_PROVIDER = "sso"
+		
+		# Set Idenitity Protocol (for SSO)
+		$env:OS_PROTOCOL = "oidc"
+		
+		# Set Identity Auth Type (for SSO)
+		$env:OS_AUTH_TYPE="v3oidcpassword"
+		
+		# Set Client ID (for SSO)
+		$os_client_id = Select-String -Path $openrc -Pattern 'OS_CLIENT_ID='
+		$env:OS_CLIENT_ID= [String]$os_client_id -split "`"" | Select -Index 1
+		
+		# Set Client Secret (for SSO)
+		$os_client_secret = Select-String -Path $openrc -Pattern 'OS_CLIENT_SECRET='
+		$env:OS_CLIENT_SECRET= [String]$os_client_secret -split "`"" | Select -Index 1
+		
+		# Set Client token endpoint (for SSO)
+		$os_access_token_endpoint = Select-String -Path $openrc -Pattern 'OS_ACCESS_TOKEN_ENDPOINT='
+		$env:OS_ACCESS_TOKEN_ENDPOINT= [String]$os_access_token_endpoint -split "`"" | Select -Index 1
+
     }
     Else {
         Write-Host $error
